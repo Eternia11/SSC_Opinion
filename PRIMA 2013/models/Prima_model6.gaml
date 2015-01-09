@@ -11,14 +11,15 @@ global {
 	graph road_network;
 	
 	float beta <- 0.4;
-	int nbel <- 10;
+	int nbel <- 2;
 	float share_prob <- 0.3;
+	float attraction_threshold <- 0.2;
 	
 	init {
 		create roads from: roads_shapefile;
 		road_network <- as_edge_graph(roads);
 		create buildings from: buildings_shapefile;
-		create people number:100 {
+		create people number:1000 {
 			buildings init_place <- one_of(buildings);
 			location <- any_location_in(init_place) + {0,0, init_place.height};
 			target <- any_location_in(one_of(buildings));
@@ -48,6 +49,25 @@ species people skills:[moving]{
 	aspect circle{
 		draw sphere(5) color: hsb(0.5-0.5*bel[0],1,1);
 	}
+	
+	action share_belief(people b){
+		int bn <- rnd(nbel-1);
+		write("share belief bn "+bn);
+		float bb <- b.bel[bn];
+		float bs <- bel[bn];
+		float dist <- bb-bs;
+		if(dist=0){
+			return 0;
+		} 
+		if(abs(dist)<attraction_threshold){
+			bel[bn] 	<- bs+signum(dist)*0.1/(dist*dist);
+			b.bel[bn] 	<- bb+signum(dist)*0.1/(dist*dist);
+		}
+		else{
+			bel[bn] 	<- bs-signum(dist)*0.1*(dist*dist);
+			b.bel[bn] 	<- bb+signum(dist)*0.1*(dist*dist);
+		}
+    }  
 }
 
 species roads {
@@ -89,19 +109,17 @@ species buildings {
 		}
 	}
 
-	reflex share_bel when: !empty(members) { 	
-    	ask members as people {
-    		if(rnd_float(1) > share_prob){
-    			people m <- people(members[rnd(length(members)-1)]);
-    			//do action:share_belief(self,m);
+	reflex share_bel when:length(members)>1{ 	
+    	ask members as list<people>{
+    		if(rnd_float(1.0)<share_prob){
+    			people m <- one_of(myself.members) as people;
+    			do share_belief(b: m);
     		}
     		
     	}
     }
     
-    action share_belief(people a,people b){
-    	
-    }    
+  
 }
 
 experiment main_experiment type:gui{
