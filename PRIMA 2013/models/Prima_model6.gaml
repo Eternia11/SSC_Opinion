@@ -89,10 +89,10 @@ species buildings {
 		}
 	}
 
-	reflex share_bel when:(length(members)>0){ 	
-    	ask members{
-    		if(rnd_float(1)>share_prob){
-    			people m <-people(members[rnd(length(members))]);
+	reflex share_bel when: !empty(members) { 	
+    	ask members as people {
+    		if(rnd_float(1) > share_prob){
+    			people m <- people(members[rnd(length(members)-1)]);
     			//do action:share_belief(self,m);
     		}
     		
@@ -105,11 +105,20 @@ species buildings {
 }
 
 experiment main_experiment type:gui{
+	parameter 'Number of belief' var: nbel category: "Global parameter";
+	
 	output {
 		display map type: opengl ambient_light: 150{
 			species roads aspect:geom;
 			species buildings aspect:geom;
 			species people aspect:circle;			
+		}
+		
+		display Charts {
+			chart name: "Average of Beliefs" type: histogram background: rgb("lightGray") {
+				data "Bel1" value: (sum (people  collect (each.bel[0])) + sum (buildings  collect sum(each.people_in_building collect (each.bel[0])))) / (length(people)+sum(buildings collect(length (each.members)))) color: rgb("green");
+				data "bel2" value: (sum (people  collect (each.bel[1])) + sum (buildings  collect sum(each.people_in_building collect (each.bel[1])))) / (length(people)+sum(buildings collect(length (each.members)))) color: rgb("red");
+			}
 		}
 	}
 }
