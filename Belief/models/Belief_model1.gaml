@@ -1,8 +1,9 @@
 /**
- *  model6
- *  This model illustrates EDO
- */ 
-model model6 
+ * Ispired from PRIMA 2013, a toy model from GAMA
+ * by REYMANN Christophe and BENIER Alan
+ */
+ 
+model Belief
 
 global {
 	file roads_shapefile <- file("../includes/road.shp");
@@ -14,6 +15,7 @@ global {
 	int nbel <- 2;
 	float share_prob <- 0.3;
 	float attraction_threshold <- 0.2;
+	int viewbel <- 1;
 	
 	init {
 		create roads from: roads_shapefile;
@@ -46,8 +48,18 @@ species people skills:[moving]{
 			}
 		}
 	}
-	aspect circle{
-		draw sphere(5) color: hsb(0.5-0.5*bel[0],1,1);
+	aspect circle {
+		/* no elsewhere to put these control statements */
+		if (nbel < 1) {
+			nbel <- 1;
+		}
+		if (viewbel > nbel) {
+			viewbel <- nbel;
+		}
+		if (viewbel < 1) {
+			viewbel <- 1;
+		}
+		draw sphere(5) color: hsb(0.5-0.5*bel[viewbel-1],1,1);
 	}
 	
 	action share_belief(people b){
@@ -135,19 +147,20 @@ species buildings {
 
 experiment main_experiment type:gui{
 	parameter 'Number of belief' var: nbel category: "Global parameter";
+	parameter 'Belief to display' var: viewbel category: "Display parameter";
 	
 	output {
-		display map type: opengl ambient_light: 150{
-			species roads aspect:geom;
-			species buildings aspect:geom;
-			species people aspect:circle;			
-		}
-		
 		display Charts {
 			chart name: "Average of Beliefs" type: histogram background: rgb("lightGray") {
 				data "Bel1" value: (sum (people  collect (each.bel[0])) + sum (buildings  collect sum(each.people_in_building collect (each.bel[0])))) / (length(people)+sum(buildings collect(length (each.members)))) color: rgb("green");
 				data "bel2" value: (sum (people  collect (each.bel[1])) + sum (buildings  collect sum(each.people_in_building collect (each.bel[1])))) / (length(people)+sum(buildings collect(length (each.members)))) color: rgb("red");
 			}
+		}
+		
+		display Map type: opengl ambient_light: 150{
+			species roads aspect:geom;
+			species buildings aspect:geom;
+			species people aspect:circle;			
 		}
 	}
 }
