@@ -52,7 +52,6 @@ species people skills:[moving]{
 	
 	action share_belief(people b){
 		int bn <- rnd(nbel-1);
-		write("share belief bn "+bn);
 		float bb <- b.bel[bn];
 		float bs <- bel[bn];
 		float dist <- bb-bs;
@@ -66,6 +65,18 @@ species people skills:[moving]{
 		else{
 			bel[bn] 	<- bs-signum(dist)*0.1*(dist*dist);
 			b.bel[bn] 	<- bb+signum(dist)*0.1*(dist*dist);
+		}
+		if (bel[bn] < 0) {
+			bel[bn] <- 0;
+		}
+		if (bel[bn] > 1) {
+			bel[bn] <- 1;
+		}
+		if (b.bel[bn] < 0) {
+			b.bel[bn] <- 0;
+		}
+		if (b.bel[bn] > 1) {
+			b.bel[bn] <- 1;
 		}
     }  
 }
