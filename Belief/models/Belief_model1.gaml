@@ -11,12 +11,10 @@ global {
 	geometry shape <- envelope(roads_shapefile);
 	graph road_network;
 	
-	float beta <- 0.4;
-	int nbel <- 2;
+	int nbel <- 1;
 	float share_prob <- 0.3;
-	float attraction_threshold <- 0.2;
 	int viewbel <- 1;
-	
+	float mu <- 0.1;
 	
 	
 	init {
@@ -29,9 +27,12 @@ global {
 			buildings init_place <- one_of(buildings);
 			location <- any_location_in(init_place) + {0,0, init_place.height};
 			target <- any_location_in(one_of(buildings));
-			bel <- list_with(nbel,float(rnd(100))/100.0);
+
 			home_bld <- one_of(buildings);
 			home <- any_location_in(home_bld);
+			
+			bel <- list_with(nbel,float(rnd(100))/100);
+			incert <- list_with(nbel,float(rnd(100))/100);
 		}
 	}
 	
@@ -45,6 +46,8 @@ species people skills:[moving]{
 	float speed <- 5.0 + rnd(5);
 	
 	list<float> bel;
+	list<float> incert;
+	
 	point home;
 	point target;
 	
@@ -80,48 +83,38 @@ species people skills:[moving]{
 	}
 	
 	aspect circle {
-		/* no elsewhere to put these control statements */
-		if (nbel < 1) {
-			nbel <- 1;
-		}
-		if (viewbel > nbel) {
-			viewbel <- nbel;
-		}
-		if (viewbel < 1) {
-			viewbel <- 1;
-		}
+		
 		draw sphere(5) color: hsb(0.5-0.5*bel[viewbel-1],1,1);
 	}
 	
 	action share_belief(people b){
 		int bn <- rnd(nbel-1);
-		float bb <- b.bel[bn];
-		float bs <- bel[bn];
-		float dist <- bb-bs;
-		if(dist != 0){
-			if(abs(dist)<attraction_threshold){
-				bel[bn] 	<- bs+signum(dist)*0.1/(dist*dist);
-				b.bel[bn] 	<- bb+signum(dist)*0.1/(dist*dist);
-			}
-			else{
-				bel[bn] 	<- bs-signum(dist)*0.1*(dist*dist);
-				b.bel[bn] 	<- bb+signum(dist)*0.1*(dist*dist);
-			}
-			if (bel[bn] < 0) {
-				bel[bn] <- 0;
-			}
-			if (bel[bn] > 1) {
-				bel[bn] <- 1;
-			}
-			if (b.bel[bn] < 0) {
-				b.bel[bn] <- 0;
-			}
-			if (b.bel[bn] > 1) {
-				b.bel[bn] <- 1;
-			}
-
-		}
+		float bi <- bel[bn];
+		float bj <- b.bel[bn];
+		float ui <- incert[bn];
+		float uj <- b.incert[bn];
+		
+		float hij <- self.min(bi+ui,bj+uj) - self.max(bi-ui,bj-uj);
+    
+    
+    	if(hij > ui){
+    		b.bel[bn] <- bj + mu*(hij/ui - 1)*(bi-bj);
+    		b.incert[bn] <-uj + mu*(hij/ui - 1)*(ui-uj); 
+    	}
+    	
+    	if(hij > uj){
+    		bel[bn] <- bi + mu*(hij/uj - 1)*(bj-bi);
+    		incert[bn] <-ui + mu*(hij/uj - 1)*(uj-ui); 
+    	}    	
     }
+    
+    float max (float i, float j) {
+		return i > j ? i : j;
+	}
+	
+	float min (float i, float j) {
+		return i < j ? i : j;
+	}  
 }
 
 species roads {
@@ -183,23 +176,49 @@ experiment main_experiment type:gui{
 	parameter 'Belief to display' var: viewbel category: "Display parameter";
 	
 	list<people> all_people update: self update_all_people ();
-	
+	float nbPeople update: float(length(all_people));
+	float sumBelief update: update_sum_belief(all_people,0);
+	float moyBelief update: (nbPeople>0)?sumBelief/nbPeople:0;
 	list<people> update_all_people{
+		
+		/* no elsewhere to put these control statements */
+		if (nbel < 1) {
+			nbel <- 1;
+		}
+		if (viewbel > nbel) {
+			viewbel <- nbel;
+		}
+		if (viewbel < 1) {
+			viewbel <- 1;
+		}
+		
 		list<people> p <- [];
 		add all: people to: p;
 		ask buildings{
 			add all: (self.members as list<people>) to: p;
+		
 		}
+		
 		return p;
 	}
 	
+	float update_sum_belief(list<people> p,int num){
+		float bsum <- 0.0;
+		
+		ask p{
+			bsum <- bsum + self.bel[num];
+		}
+		
+		return bsum;	
+	}
 	
 	
 	output {
 		display Charts {
 			chart name: "Average of Beliefs" type: histogram background: rgb("lightGray") {
-				data "Bel1" value: sum(self.all_people collect(each.bel[0]))/length(all_people) color: rgb("red");
-				data "Bel1" value: sum(self.all_people collect(each.bel[0]))/length(all_people) color: rgb("green");
+				data "Bel0" value: moyBelief color: rgb("red");
+				//data "Bel1" value: sum(self.all_people collect(each.bel[1]))/(length(all_people)+0.000000001) color: rgb("green");
+
 			}
 		}
 		
