@@ -12,9 +12,9 @@ global {
 	graph road_network;
 	
 	int nbel <- 1;
-	float share_prob <- 0.3;
+	float share_prob <- 1.0;
 	int viewbel <- 1;
-	float mu <- 0.1;
+	float mu <- 1.0;
 	
 	
 	init {
@@ -23,7 +23,7 @@ global {
 		create buildings from: buildings_shapefile {
 			inhabitant_bel <- list_with(nbel,0.5);
 		}
-		create people number:1000 {
+		create people number:2000 {
 			buildings init_place <- one_of(buildings);
 			location <- any_location_in(init_place) + {0,0, init_place.height};
 			target <- any_location_in(one_of(buildings));
@@ -177,8 +177,13 @@ experiment main_experiment type:gui{
 	
 	list<people> all_people update: self update_all_people ();
 	float nbPeople update: float(length(all_people));
+	
 	float sumBelief update: update_sum_belief(all_people,0);
 	float moyBelief update: (nbPeople>0)?sumBelief/nbPeople:0;
+	
+	float sumIncert;
+	float moyIncert update: (nbPeople>0)?sumIncert/nbPeople:0;
+	
 	list<people> update_all_people{
 		
 		/* no elsewhere to put these control statements */
@@ -204,11 +209,13 @@ experiment main_experiment type:gui{
 	
 	float update_sum_belief(list<people> p,int num){
 		float bsum <- 0.0;
-		
+		float isum <- 0.0;
 		ask p{
 			bsum <- bsum + self.bel[num];
+			isum <- isum + self.incert[num];
 		}
 		
+		sumIncert <- isum;
 		return bsum;	
 	}
 	
@@ -217,6 +224,7 @@ experiment main_experiment type:gui{
 		display Charts {
 			chart name: "Average of Beliefs" type: histogram background: rgb("lightGray") {
 				data "Bel0" value: moyBelief color: rgb("red");
+				data "Inc0" value: moyIncert color: rgb("green");
 				//data "Bel1" value: sum(self.all_people collect(each.bel[1]))/(length(all_people)+0.000000001) color: rgb("green");
 
 			}
