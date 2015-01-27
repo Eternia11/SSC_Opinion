@@ -20,13 +20,16 @@ global {
 	init {
 		create roads from: roads_shapefile;
 		road_network <- as_edge_graph(roads);
-		create buildings from: buildings_shapefile;
+		create buildings from: buildings_shapefile {
+			inhabitant_bel <- list_with(nbel,0.5);
+		}
 		create people number:1000 {
 			buildings init_place <- one_of(buildings);
 			location <- any_location_in(init_place) + {0,0, init_place.height};
 			target <- any_location_in(one_of(buildings));
 			bel <- list_with(nbel,float(rnd(100))/100.0);
-			home <- any_location_in(one_of(buildings));
+			home_bld <- one_of(buildings);
+			home <- any_location_in(home_bld);
 		}
 	}
 }
@@ -37,6 +40,9 @@ species people skills:[moving]{
 	list<float> bel;
 	point home;
 	point target;
+	
+	buildings home_bld;
+	
 	reflex move {
 		do goto target:target on: road_network;
 		if (location = target) {
@@ -48,6 +54,24 @@ species people skills:[moving]{
 			}
 		}
 	}
+	
+	reflex live_home when : (location = home) {
+		loop i from: 0 to: nbel-1 { 
+			float bb <- home_bld.inhabitant_bel[i];
+			float bs <- bel[i];
+			float dist <- bb-bs;
+			if(dist != 0){
+				home_bld.inhabitant_bel[i] <- bb-0.1*dist;
+				if (home_bld.inhabitant_bel[i] < 0) {
+					home_bld.inhabitant_bel[i] <- 0;
+				}
+				if (home_bld.inhabitant_bel[i] > 1) {
+					home_bld.inhabitant_bel[i] <- 1;
+				}
+			}
+		}
+	}
+	
 	aspect circle {
 		/* no elsewhere to put these control statements */
 		if (nbel < 1) {
@@ -67,30 +91,29 @@ species people skills:[moving]{
 		float bb <- b.bel[bn];
 		float bs <- bel[bn];
 		float dist <- bb-bs;
-		if(dist=0){
-			return 0;
-		} 
-		if(abs(dist)<attraction_threshold){
-			bel[bn] 	<- bs+signum(dist)*0.1/(dist*dist);
-			b.bel[bn] 	<- bb+signum(dist)*0.1/(dist*dist);
+		if(dist != 0){
+			if(abs(dist)<attraction_threshold){
+				bel[bn] 	<- bs+signum(dist)*0.1/(dist*dist);
+				b.bel[bn] 	<- bb+signum(dist)*0.1/(dist*dist);
+			}
+			else{
+				bel[bn] 	<- bs-signum(dist)*0.1*(dist*dist);
+				b.bel[bn] 	<- bb+signum(dist)*0.1*(dist*dist);
+			}
+			if (bel[bn] < 0) {
+				bel[bn] <- 0;
+			}
+			if (bel[bn] > 1) {
+				bel[bn] <- 1;
+			}
+			if (b.bel[bn] < 0) {
+				b.bel[bn] <- 0;
+			}
+			if (b.bel[bn] > 1) {
+				b.bel[bn] <- 1;
+			}
 		}
-		else{
-			bel[bn] 	<- bs-signum(dist)*0.1*(dist*dist);
-			b.bel[bn] 	<- bb+signum(dist)*0.1*(dist*dist);
-		}
-		if (bel[bn] < 0) {
-			bel[bn] <- 0;
-		}
-		if (bel[bn] > 1) {
-			bel[bn] <- 1;
-		}
-		if (b.bel[bn] < 0) {
-			b.bel[bn] <- 0;
-		}
-		if (b.bel[bn] > 1) {
-			b.bel[bn] <- 1;
-		}
-    }  
+    }
 }
 
 species roads {
@@ -107,8 +130,10 @@ species buildings {
    	float I_to_1 <- 0.0;
    	float h<-0.1;
    	
+   	list<float> inhabitant_bel;
+   	
 	aspect geom {
-		draw shape color: empty(members) ? rgb("gray") : rgb("green") depth: height;
+		draw shape color: hsb(0.5-0.5*inhabitant_bel[viewbel-1],1,1);
 	}
 	species people_in_building parent: people schedules: [] {
 		int leaving_time;
