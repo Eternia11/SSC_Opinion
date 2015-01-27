@@ -9,14 +9,16 @@ model BeliefGrid
 
 global {
 	
-	float mu <- 0.1;
+	float mu <- 0.1 min: 0.0 max: 1.0 parameter: "Speed of influence:" category: "Population";
 	int nbel <- 1;
 	int viewbel <- 1;
 
 	const black type: rgb <- rgb ("black");
-	float density_of_people <- 0.7 parameter: "Density of people:" category: "Population" min: 0.01 max: 1.0;
+	float density_of_people <- 1.0 parameter: "Density of people:" category: "Population" min: 0.01 max: 1.0;
 	int dimensions <- 40 max: 400 min: 10 parameter: "Width and height of the environment:" category: "Environment";
 	int neighbours_distance <- 1 max: 10 min: 1 parameter: "Distance of perception:" category: "Population";
+	float min_incert <- 0.1 max: 1.0 min: 0.0 parameter: "Minimum incertitude:" category: "Population";
+	
 	int number_of_people <- 0;
 	//int sum_total_neighbours <- 1 update: sum (all_people collect each.total_nearby) min: 1;
 	list<base> all_people <- [];  
@@ -80,7 +82,7 @@ entities {
 			location <- my_place.location; 
 			remove my_place from: free_places;
 			bel <- list_with(nbel,float(rnd(100))/100);
-			incert <- list_with(nbel,float(rnd(100))/100);
+			incert <- list_with(nbel,min_incert+float(rnd(int((1.0-min_incert)*100)))/100);
 			people temp <- self;
 			ask people at_distance neighbours_distance{
 				add temp to:my_neighbours;
