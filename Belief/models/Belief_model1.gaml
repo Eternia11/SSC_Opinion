@@ -17,6 +17,8 @@ global {
 	float attraction_threshold <- 0.2;
 	int viewbel <- 1;
 	
+	
+	
 	init {
 		create roads from: roads_shapefile;
 		road_network <- as_edge_graph(roads);
@@ -32,8 +34,13 @@ global {
 			home <- any_location_in(home_bld);
 		}
 	}
+	
+	
+	
+	
 }
 
+	
 species people skills:[moving]{		
 	float speed <- 5.0 + rnd(5);
 	
@@ -112,6 +119,7 @@ species people skills:[moving]{
 			if (b.bel[bn] > 1) {
 				b.bel[bn] <- 1;
 			}
+
 		}
     }
 }
@@ -174,11 +182,24 @@ experiment main_experiment type:gui{
 	parameter 'Number of belief' var: nbel category: "Global parameter";
 	parameter 'Belief to display' var: viewbel category: "Display parameter";
 	
+	list<people> all_people update: self update_all_people ();
+	
+	list<people> update_all_people{
+		list<people> p <- [];
+		add all: people to: p;
+		ask buildings{
+			add all: (self.members as list<people>) to: p;
+		}
+		return p;
+	}
+	
+	
+	
 	output {
 		display Charts {
 			chart name: "Average of Beliefs" type: histogram background: rgb("lightGray") {
-				data "Bel1" value: (sum (people  collect (each.bel[0])) + sum (buildings  collect sum(each.people_in_building collect (each.bel[0])))) / (length(people)+sum(buildings collect(length (each.members)))) color: rgb("green");
-				data "bel2" value: (sum (people  collect (each.bel[1])) + sum (buildings  collect sum(each.people_in_building collect (each.bel[1])))) / (length(people)+sum(buildings collect(length (each.members)))) color: rgb("red");
+				data "Bel1" value: sum(self.all_people collect(each.bel[0]))/length(all_people) color: rgb("red");
+				data "Bel1" value: sum(self.all_people collect(each.bel[0]))/length(all_people) color: rgb("green");
 			}
 		}
 		
