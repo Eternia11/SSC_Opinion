@@ -12,7 +12,7 @@ global {
 	graph road_network;
 	
 	int nb_people <- 200;
-	int nbel <- 1;
+	int nbel <- 1 min : 1 max : 2 parameter: "Number of beliefs:" category:"Global parameter";
 	float share_prob <- 1.0;
 	int viewbel <- 1;
 	float mu <- 0.01 min: 0.0 max: 1.0 parameter: "Speed of influence:" category: "Global parameter";
@@ -115,28 +115,35 @@ species people skills:[moving]{
 	
 	aspect circle {
 		
-		draw sphere(5) color: hsb(0.5-0.5*bel[viewbel-1],1,1);
+		draw sphere(5) color: hsb(0.33*bel[viewbel-1],1,1);
 	}
 	
 	action share_belief(people b){
 		int bn <- rnd(nbel-1);
-		float bi <- bel[bn];
+		people a <- self;
+		float bi <- a.bel[bn];
 		float bj <- b.bel[bn];
-		float ui <- incert[bn];
+		float ui <- a.incert[bn];
 		float uj <- b.incert[bn];
 		
 		float hij <- self.min(bi+ui,bj+uj) - self.max(bi-ui,bj-uj);
     
     
-    	if(hij > ui){
-    		b.bel[bn] <- bj + mu*(hij/ui - 1)*(bi-bj);
-    		b.incert[bn] <-uj + mu*(hij/ui - 1)*(ui-uj); 
-    	}
-    	
     	if(hij > uj){
-    		bel[bn] <- bi + mu*(hij/uj - 1)*(bj-bi);
-    		incert[bn] <-ui + mu*(hij/uj - 1)*(uj-ui); 
-    	}    	
+  		  	loop i from: 0 to: length(a.bel) - 1 step:1 {
+				a.bel[i] <-a.bel[i]+mu*(hij/uj - 1)*(b.bel[i]-a.bel[i]);
+			}
+    		//a.bel[bn] <- bi + mu*(hij/uj - 1)*(bj-bi);
+    		a.incert[bn] <-ui + mu*(hij/uj - 1)*(uj-ui); 
+    	}
+    			
+    	if(hij>ui){
+    		loop i from: 0 to: length(b.bel) - 1 step:1 {
+				b.bel[i] <-b.bel[i]+mu*(hij/ui - 1)*(a.bel[i]-b.bel[i]);
+			}
+    		//a.bel[bn] <- bi + mu*(hij/uj - 1)*(bj-bi);
+    		b.incert[bn] <-uj + mu*(hij/ui - 1)*(ui-uj);    	
+    	}
     }
     
     float max (float i, float j) {
@@ -165,7 +172,7 @@ species buildings {
    	list<float> inhabitant_bel;
    	
 	aspect geom {
-		draw shape color: hsb(0.5-0.5*inhabitant_bel[viewbel-1],1,1);
+		draw shape color: hsb(0.33*inhabitant_bel[viewbel-1],1,1);
 	}
 	species people_in_building parent: people schedules: [] {
 		int leaving_time;
