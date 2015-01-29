@@ -20,6 +20,7 @@ global {
 	float max_incert <- 0.5 max: 1.0 min: 0.0 parameter: "Maximum inital incertitude:" category: "Global parameter";
 	
 	list<float> moyBel <- [];
+	list<float> moyInc <- [];
 	list<int> nb_people_per_piece_of_pie <- [];
 	int nb_piece_of_pie <- 7;
 	
@@ -49,6 +50,11 @@ global {
 		moyBel <- [];
 		loop i from:0 to:nbel-1 {
 			add 0.0 to: moyBel;
+		}
+		
+		moyInc <- [];
+		loop i from:0 to:nbel-1 {
+			add 0.0 to: moyInc;
 		}
 		
 		nb_people_per_piece_of_pie <- [];
@@ -232,6 +238,15 @@ experiment main_experiment type:gui{
 				moyBel[i] <- bsum/len_p;
 			}
 			
+			/* update of moyInc */
+			loop i from:0 to:nbel-1 {
+				float isum <- 0.0;
+				ask p{
+					isum <- isum + self.incert[i];
+				}
+				moyInc[i] <- isum/len_p;
+			}
+			
 			/* update of nb_people_per_piece_of_pie */
 			nb_people_per_piece_of_pie <- [];
 			loop i from:0 to:nb_piece_of_pie-1 {
@@ -255,19 +270,25 @@ experiment main_experiment type:gui{
 	}
 	
 	output {
-		display Charts {
+		display Belief {
 			chart name: "Average of Beliefs" type: histogram background: rgb("lightGray") {
 				/* Affichage des moyennes de chaque belief sur le même histogramme */
 				loop i from: 0 to: nbel-1 {
 					data "Bel_"+(i+1) value: moyBel[i] color: hsb(i/nbel,1,1);
 				}
-
-				data "Bel1" value: moyBelief color: rgb("blue");
-				data "Inc1" value: moyIncert color: rgb("lightblue");
 			}
 		}
 		
-		display Graphs {
+		display Incert {
+			chart name: "Average of Beliefs" type: histogram background: rgb("lightGray") {
+				/* Affichage des moyennes des incertitudes de chaque belief sur le même histogramme */
+				loop i from: 0 to: nbel-1 {
+					data "Inc_"+(i+1) value: moyInc[i] color: hsb(i/nbel,1,1);
+				}
+			}
+		}
+		
+		display Distri {
 			chart name: "Distribution of the viewed " type: pie background: rgb("lightGray") {
 				loop i from:0 to:nb_piece_of_pie-1 {
 					data ""+i+"/"+nb_piece_of_pie+" - "+(i+1)+"/"+nb_piece_of_pie value: nb_people_per_piece_of_pie[i] color: hsb(i/nb_piece_of_pie,1,1);
