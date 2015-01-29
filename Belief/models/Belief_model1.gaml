@@ -18,12 +18,10 @@ global {
 	float mu <- 1.0;
 	
 	list<float> moyBel <- [];
+	list<int> nb_people_per_piece_of_pie <- [];
+	int nb_piece_of_pie <- 7;
 	
 	init {
-		moyBel <- [];
-		loop i from:0 to:nbel-1 {
-			add 0.0 to: moyBel;
-		}
 		create roads from: roads_shapefile;
 		road_network <- as_edge_graph(roads);
 		create buildings from: buildings_shapefile {
@@ -39,6 +37,16 @@ global {
 			
 			bel <- list_with(nbel,float(rnd(100))/100);
 			incert <- list_with(nbel,float(rnd(100))/100);
+		}
+		
+		moyBel <- [];
+		loop i from:0 to:nbel-1 {
+			add 0.0 to: moyBel;
+		}
+		
+		nb_people_per_piece_of_pie <- [];
+		loop i from:0 to:nb_piece_of_pie-1 {
+			add (people count ((each.bel[viewbel-1] >= i/nb_piece_of_pie) and (each.bel[viewbel-1] < (i+1/nb_piece_of_pie)+0.00000001))) to: nb_people_per_piece_of_pie;
 		}
 	}
 	
@@ -185,6 +193,7 @@ experiment main_experiment type:gui{
 	parameter 'Number of People' var: nb_people category: "Global parameter";
 	parameter 'Number of belief' var: nbel category: "Global parameter";
 	parameter 'Belief to display' var: viewbel category: "Display parameter";
+	parameter 'Number of piece of Pie' var: nb_piece_of_pie category: "Display parameter";
 	
 	list<people> all_people update: self update_all_people ();
 	float nbPeople update: float(length(all_people));
@@ -204,7 +213,9 @@ experiment main_experiment type:gui{
 		
 		}
 		
+		/* update of global variables (maybe could be placed in a more appropriate position in the code) */
 		if (!empty(p)) {
+			/* update of moyBel */
 			int len_p <- length(p);
 			loop i from:0 to:nbel-1 {
 				float bsum <- 0.0;
@@ -212,6 +223,12 @@ experiment main_experiment type:gui{
 					bsum <- bsum + self.bel[i];
 				}
 				moyBel[i] <- bsum/len_p;
+			}
+			
+			/* update of nb_people_per_piece_of_pie */
+			nb_people_per_piece_of_pie <- [];
+			loop i from:0 to:nb_piece_of_pie-1 {
+				add (p count ((each.bel[viewbel-1] >= i/nb_piece_of_pie) and (each.bel[viewbel-1] < (i+1/nb_piece_of_pie)+0.00000001))) to: nb_people_per_piece_of_pie;
 			}
 		}
 		
@@ -233,12 +250,20 @@ experiment main_experiment type:gui{
 	output {
 		display Charts {
 			chart name: "Average of Beliefs" type: histogram background: rgb("lightGray") {
-				data "Bel0" value: moyBelief color: rgb("blue");
-				data "Inc0" value: moyIncert color: rgb("lightblue");
-				
 				/* Affichage des moyennes de chaque belief sur le même histogramme */
 				loop i from: 0 to: nbel-1 {
 					data "Bel_"+(i+1) value: moyBel[i] color: hsb(i/nbel,1,1);
+				}
+
+				data "Bel1" value: moyBelief color: rgb("blue");
+				data "Inc1" value: moyIncert color: rgb("lightblue");
+			}
+		}
+		
+		display Graphs {
+			chart name: "Distribution of the viewed " type: pie background: rgb("lightGray") {
+				loop i from:0 to:nb_piece_of_pie-1 {
+					data ""+i+"/"+nb_piece_of_pie+" - "+(i+1)+"/"+nb_piece_of_pie value: nb_people_per_piece_of_pie[i] color: hsb(i/nb_piece_of_pie,1,1);
 				}
 			}
 		}
@@ -246,7 +271,7 @@ experiment main_experiment type:gui{
 		display Map type: opengl ambient_light: 150{
 			species roads aspect:geom;
 			species buildings aspect:geom;
-			species people aspect:circle;			
+			species people aspect:circle;
 		}
 	}
 }
