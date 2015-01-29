@@ -46,7 +46,7 @@ global {
 		
 		nb_people_per_piece_of_pie <- [];
 		loop i from:0 to:nb_piece_of_pie-1 {
-			add (people count ((each.bel[viewbel-1] >= i/nb_piece_of_pie) and (each.bel[viewbel-1] < (i+1/nb_piece_of_pie)+0.00000001))) to: nb_people_per_piece_of_pie;
+			add (people count ((each.bel[viewbel-1] >= i/nb_piece_of_pie) and (each.bel[viewbel-1] < ((i+1)/nb_piece_of_pie)+0.00000001))) to: nb_people_per_piece_of_pie;
 		}
 	}
 	
@@ -228,7 +228,7 @@ experiment main_experiment type:gui{
 			/* update of nb_people_per_piece_of_pie */
 			nb_people_per_piece_of_pie <- [];
 			loop i from:0 to:nb_piece_of_pie-1 {
-				add (p count ((each.bel[viewbel-1] >= i/nb_piece_of_pie) and (each.bel[viewbel-1] < (i+1/nb_piece_of_pie)+0.00000001))) to: nb_people_per_piece_of_pie;
+				add (p count ((each.bel[viewbel-1] >= i/nb_piece_of_pie) and (each.bel[viewbel-1] < ((i+1)/nb_piece_of_pie)+0.00000001))) to: nb_people_per_piece_of_pie;
 			}
 		}
 		
