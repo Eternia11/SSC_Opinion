@@ -19,7 +19,8 @@ global skills:[graphic]{
 	int neighbours_distance <- 1 max: 10 min: 1 parameter: "Distance of perception:" category: "Population";
 	float min_incert <- 0.1 max: 1.0 min: 0.0 parameter: "Minimum initial incertitude:" category: "Population";
 	float max_incert <- 0.5 max: 1.0 min: 0.0 parameter: "Maximum inital incertitude:" category: "Population";
-		
+	float def_rej <- 0.5 max: 1.0 min: 0.0 parameter: "Rejectance" category: "Population";
+	
 	int number_of_people <- 0;
 	//int sum_total_neighbours <- 1 update: sum (all_people collect each.total_nearby) min: 1;
 	list<base> all_people <- [];  
@@ -67,19 +68,27 @@ entities {
 
 	species people parent: base  skills:[graphic]{
 		list<people> my_neighbours -> {people at_distance neighbours_distance};
-
 		space my_place;
 		
 			list<float> bel;
 			list<float> incert;
+			list<float> rej;
 	
 		float viewbel_val -> {bel[viewbel-1]};
 		init {
 			my_place <- one_of(free_places);
 			location <- my_place.location; 
 			remove my_place from: free_places;
-			bel <- list_with(nbel,float(rnd(100))/100);
-			incert <- list_with(nbel,min_incert+float(rnd(int((1.0-min_incert)*100)))/100);
+			bel <- list_with(nbel,0.0);
+			incert <- list_with(nbel,0.0);
+			rej <- list_with(nbel,0.0);
+			loop i from: 0 to: nbel - 1 step:1 {
+				bel[i] <- rnd_float(1.0);
+				incert[i] <- min_incert+rnd_float(max_incert-min_incert);
+				rej[i] <- def_rej; 
+				
+			}
+			
 			
 		} 
 		reflex share_belief{
@@ -89,31 +98,43 @@ entities {
 			ask one_of(my_neighbours){
 				float bi <- a.bel[bn];		
 				float ui <- a.incert[bn];
-			
+				float ri <- a.rej[bn];
+				
 				people b <- self;
 				float bj <- b.bel[bn];
 				float uj <- b.incert[bn];
+				float rj <- b.rej[bn];
+				
 			
 		
-				float hij <- self.min(bi+ui,bj+uj) - self.max(bi-ui,bj-uj);
+				//float hij <- self.min(bi+ui,bj+uj) - self.max(bi-ui,bj-uj);
     
 
     	
-  		  		if(hij > uj){
+  		  		if(abs(bj-bi)<ui){
   		  			loop i from: 0 to: length(a.bel) - 1 step:1 {
-						a.bel[i] <-a.bel[i]+mu*(hij/uj - 1)*(b.bel[i]-a.bel[i]);
+						a.bel[i] <- max(0.0,min(1.0,a.bel[i]+mu*(b.bel[i]-a.bel[i])));
 					}
-    				//a.bel[bn] <- bi + mu*(hij/uj - 1)*(bj-bi);
-    				a.incert[bn] <-ui + mu*(hij/uj - 1)*(uj-ui); 
-    			}
+				}else if(abs(bj-bi)>rj){
+					loop i from: 0 to: length(b.bel) - 1 step:1 {
+						a.bel[i] <- max(0.0,min(1.0,a.bel[i]-mu*(b.bel[i]-a.bel[i])));
+					}
+				}
     			
-    			if(hij>ui){
+    			
+    			
+    			if(abs(bj-bi)<uj){
     				loop i from: 0 to: length(b.bel) - 1 step:1 {
-						b.bel[i] <-b.bel[i]+mu*(hij/ui - 1)*(a.bel[i]-b.bel[i]);
+						b.bel[i] <- max(0.0,min(1.0,b.bel[i]+mu*(a.bel[i]-b.bel[i])));
 					}
-    				//a.bel[bn] <- bi + mu*(hij/uj - 1)*(bj-bi);
-    				b.incert[bn] <-uj + mu*(hij/ui - 1)*(ui-uj); 
-    			}
+				}else if(abs(bj-bi)>rj){
+					loop i from: 0 to: length(b.bel) - 1 step:1 {
+						b.bel[i] <- max(0.0,min(1.0,b.bel[i]-mu*(a.bel[i]-b.bel[i])));
+					}
+				}
+				
+				
+    			
     			
 			}
 			
