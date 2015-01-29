@@ -24,6 +24,8 @@ global {
 	list<int> nb_people_per_piece_of_pie <- [];
 	int nb_piece_of_pie <- 7;
 	
+	list<float> moyDist_to_home_bel <- [];
+	
 	init {
 		create roads from: roads_shapefile;
 		road_network <- as_edge_graph(roads);
@@ -43,23 +45,39 @@ global {
 			loop i from: 0 to: nbel - 1 step:1 {
 				bel[i] <- rnd_float(1.0);
 				incert[i] <- min_incert+rnd_float(max_incert-min_incert);
-				
 			}
 		}
 		
 		moyBel <- [];
 		loop i from:0 to:nbel-1 {
-			add 0.0 to: moyBel;
+			float bsum <- 0.0;
+			ask people {
+				bsum <- bsum + self.bel[i];
+			}
+			add bsum/nb_people to: moyBel;
 		}
 		
 		moyInc <- [];
 		loop i from:0 to:nbel-1 {
-			add 0.0 to: moyInc;
+			float isum <- 0.0;
+			ask people {
+				isum <- isum + self.incert[i];
+			}
+			add isum/nb_people to: moyInc;
 		}
 		
 		nb_people_per_piece_of_pie <- [];
 		loop i from:0 to:nb_piece_of_pie-1 {
 			add (people count ((each.bel[viewbel-1] >= i/nb_piece_of_pie) and (each.bel[viewbel-1] < ((i+1)/nb_piece_of_pie)+0.00000001))) to: nb_people_per_piece_of_pie;
+		}
+		
+		moyDist_to_home_bel <- [];
+		loop i from:0 to:nbel-1 {
+			float dist_home_bel_sum <- 0.0;
+			ask people {
+				dist_home_bel_sum <- dist_home_bel_sum + abs(self.bel[i] + self.home_bld.inhabitant_bel[i]);
+			}
+			add dist_home_bel_sum/nb_people to: moyDist_to_home_bel;
 		}
 	}
 	
@@ -218,12 +236,6 @@ experiment main_experiment type:gui{
 	list<people> all_people update: self update_all_people ();
 	float nbPeople update: float(length(all_people));
 	
-	float sumBelief update: update_sum_belief(all_people,0);
-	float moyBelief update: (nbPeople>0)?sumBelief/nbPeople:0;
-	
-	float sumIncert;
-	float moyIncert update: (nbPeople>0)?sumIncert/nbPeople:0;
-	
 	list<people> update_all_people{
 		
 		list<people> p <- [];
@@ -255,25 +267,21 @@ experiment main_experiment type:gui{
 			}
 			
 			/* update of nb_people_per_piece_of_pie */
-			nb_people_per_piece_of_pie <- [];
 			loop i from:0 to:nb_piece_of_pie-1 {
-				add (p count ((each.bel[viewbel-1] >= i/nb_piece_of_pie) and (each.bel[viewbel-1] < ((i+1)/nb_piece_of_pie)+0.00000001))) to: nb_people_per_piece_of_pie;
+				nb_people_per_piece_of_pie[i] <- (p count ((each.bel[viewbel-1] >= i/nb_piece_of_pie) and (each.bel[viewbel-1] < ((i+1)/nb_piece_of_pie)+0.00000001)));
+			}
+			
+			/*update of moyDist_to_home_bel */
+			loop i from:0 to:nbel-1 {
+				float dist_home_bel_sum <- 0.0;
+				ask p {
+					dist_home_bel_sum <- dist_home_bel_sum + abs(self.bel[i] + self.home_bld.inhabitant_bel[i]);
+				}
+				moyDist_to_home_bel[i] <- dist_home_bel_sum/len_p;
 			}
 		}
 		
 		return p;
-	}
-	
-	float update_sum_belief(list<people> p,int num){
-		float bsum <- 0.0;
-		float isum <- 0.0;
-		ask p{
-			bsum <- bsum + self.bel[num];
-			isum <- isum + self.incert[num];
-		}
-		
-		sumIncert <- isum;
-		return bsum;	
 	}
 	
 	output {
@@ -296,9 +304,18 @@ experiment main_experiment type:gui{
 		}
 		
 		display Distri {
-			chart name: "Distribution of the viewed " type: pie background: rgb("lightGray") {
+			chart name: "Distribution of the viewed" type: pie background: rgb("lightGray") {
 				loop i from:0 to:nb_piece_of_pie-1 {
 					data ""+i+"/"+nb_piece_of_pie+" - "+(i+1)+"/"+nb_piece_of_pie value: nb_people_per_piece_of_pie[i] color: hsb(i/nb_piece_of_pie,1,1);
+				}
+			}
+		}
+		
+		display Dist_Home {
+			chart name: "Homogeneity of families's belief" type: histogram background: rgb("lightGray") {
+				/* Affichage des moyennes des distances entre les belief de chaque habitant et de leur maisons */
+				loop i from: 0 to: nbel-1 {
+					data "Bel_"+(i+1) value: moyDist_to_home_bel[i] color: hsb(i/nbel,1,1);
 				}
 			}
 		}
