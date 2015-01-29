@@ -15,7 +15,9 @@ global {
 	int nbel <- 1;
 	float share_prob <- 1.0;
 	int viewbel <- 1;
-	float mu <- 1.0;
+	float mu <- 0.01 min: 0.0 max: 1.0 parameter: "Speed of influence:" category: "Global parameter";
+	float min_incert <- 0.1 max: 1.0 min: 0.0 parameter: "Minimum initial incertitude:" category: "Global parameter";
+	float max_incert <- 0.5 max: 1.0 min: 0.0 parameter: "Maximum inital incertitude:" category: "Global parameter";
 	
 	list<float> moyBel <- [];
 	list<int> nb_people_per_piece_of_pie <- [];
@@ -35,8 +37,13 @@ global {
 			home_bld <- one_of(buildings);
 			home <- any_location_in(home_bld);
 			
-			bel <- list_with(nbel,float(rnd(100))/100);
-			incert <- list_with(nbel,float(rnd(100))/100);
+			bel <- list_with(nbel,0.0);
+			incert <- list_with(nbel,0.0);
+			loop i from: 0 to: nbel - 1 step:1 {
+				bel[i] <- rnd_float(1.0);
+				incert[i] <- min_incert+rnd_float(max_incert-min_incert);
+				
+			}
 		}
 		
 		moyBel <- [];
