@@ -15,9 +15,12 @@ global {
 	int nbel <- 10 min : 1 step: 1 parameter: "Number of beliefs" category: "Global parameters";
 	float share_prob <- 1.0;
 	int viewbel <- 1 min : 1 step: 1 parameter: "Belief to display" category: "Display parameters";
-	float mu <- 0.01 min: 0.0 max: 1.0 step: 0.01 parameter: "Speed of influence:" category: "Global parameters";
-	float min_incert <- 0.1 max: 1.0 min: 0.0 step: 0.1 parameter: "Minimum initial incertitude:" category: "Global parameters";
-	float max_incert <- 0.5 max: 1.0 min: 0.0 step: 0.1 parameter: "Maximum inital incertitude:" category: "Global parameters";
+	float mu <- 0.01 min: 0.0 max: 1.0 step: 0.01 parameter: "Speed of influence" category: "Global parameters";
+	float min_incert <- 0.1 max: 1.0 min: 0.0 step: 0.1 parameter: "Minimum initial incertitude" category: "Global parameters";
+	float max_incert <- 0.5 max: 1.0 min: 0.0 step: 0.1 parameter: "Maximum inital incertitude" category: "Global parameters";
+	float family_influence_bel <- 0.2 min: 0.0 max: 1.0 step: 0.05 parameter: "Speed of influence of the family on own belief" category: "Global parameters";
+	float family_influence_incert <- 0.01 min: 0.0 max: 0.1 step: 0.01 parameter: "Speed of influence of the family on own incertitude" category: "Global parameters";
+	float home_influence <- 0.1 min: 0.0 max: 1.0 step: 0.05 parameter: "Speed of influence on the family" category: "Global parameters";
 	
 	list<float> moyBel <- [];
 	list<float> moyInc <- [];
@@ -116,11 +119,27 @@ species people skills:[moving]{
 			float bs <- bel[i];
 			float dist <- bb-bs;
 			
-			/* test */
-			//incert[i] <- incert[i]+0.05*abs(dist);
+			/* influence of the families on the incertitude */
+			incert[i] <- incert[i]+family_influence_incert*abs(dist);
+			if (incert[i] < min_incert) {
+				incert[i] <- min_incert;
+			}
+			if (incert[i] > max_incert) {
+				incert[i] <- max_incert;
+			}
 			
+			/* influence of the families on the bielief directly */
+			bel[i] <- bel[i]+family_influence_bel*abs(dist);
+			if (bel[i] < 0) {
+				bel[i] <- 0;
+			}
+			if (bel[i] > 1) {
+				bel[i] <- 1;
+			}
+			
+			/* influence of the inhabitants on their home */
 			if(dist != 0) {
-				home_bld.inhabitant_bel[i] <- bb-0.1*dist;
+				home_bld.inhabitant_bel[i] <- bb-home_influence*dist;
 				if (home_bld.inhabitant_bel[i] < 0) {
 					home_bld.inhabitant_bel[i] <- 0;
 				}
