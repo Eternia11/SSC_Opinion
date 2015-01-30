@@ -11,18 +11,18 @@ global {
 	geometry shape <- envelope(roads_shapefile);
 	graph road_network;
 	
-	int nb_people <- 200;
-	int nbel <- 1 min : 1 max : 2 parameter: "Number of beliefs:" category:"Global parameter";
+	int nb_people <- 200 min : 1 step: 1 parameter: "Number of people" category: "Global parameters";
+	int nbel <- 2 min : 1 step: 1 parameter: "Number of beliefs" category: "Global parameters";
 	float share_prob <- 1.0;
-	int viewbel <- 1;
-	float mu <- 0.01 min: 0.0 max: 1.0 parameter: "Speed of influence:" category: "Global parameter";
-	float min_incert <- 0.1 max: 1.0 min: 0.0 parameter: "Minimum initial incertitude:" category: "Global parameter";
-	float max_incert <- 0.5 max: 1.0 min: 0.0 parameter: "Maximum inital incertitude:" category: "Global parameter";
+	int viewbel <- 1 min : 1 step: 1 parameter: "Belief to display" category: "Display parameters";
+	float mu <- 0.01 min: 0.0 max: 1.0 step: 0.01 parameter: "Speed of influence:" category: "Global parameters";
+	float min_incert <- 0.1 max: 1.0 min: 0.0 step: 0.1 parameter: "Minimum initial incertitude:" category: "Global parameters";
+	float max_incert <- 0.5 max: 1.0 min: 0.0 step: 0.1 parameter: "Maximum inital incertitude:" category: "Global parameters";
 	
 	list<float> moyBel <- [];
 	list<float> moyInc <- [];
 	list<int> nb_people_per_piece_of_pie <- [];
-	int nb_piece_of_pie <- 7;
+	int nb_piece_of_pie <- 7 min : 1 step: 1 parameter: "Number of piece of pie" category: "Display parameters";
 	
 	list<float> moyDist_to_home_bel <- [];
 	
@@ -75,7 +75,7 @@ global {
 		loop i from:0 to:nbel-1 {
 			float dist_home_bel_sum <- 0.0;
 			ask people {
-				dist_home_bel_sum <- dist_home_bel_sum + abs(self.bel[i] + self.home_bld.inhabitant_bel[i]);
+				dist_home_bel_sum <- dist_home_bel_sum + abs(self.bel[i] - self.home_bld.inhabitant_bel[i]);
 			}
 			add dist_home_bel_sum/nb_people to: moyDist_to_home_bel;
 		}
@@ -117,7 +117,7 @@ species people skills:[moving]{
 			float dist <- bb-bs;
 			
 			/* test */
-			incert[i] <- incert[i]+0.05*abs(dist);
+			//incert[i] <- incert[i]+0.05*abs(dist);
 			
 			if(dist != 0) {
 				home_bld.inhabitant_bel[i] <- bb-0.1*dist;
@@ -228,11 +228,6 @@ species buildings {
 }
 
 experiment main_experiment type:gui{
-	parameter 'Number of People' var: nb_people category: "Global parameter";
-	parameter 'Number of belief' var: nbel category: "Global parameter";
-	parameter 'Belief to display' var: viewbel category: "Display parameter";
-	parameter 'Number of piece of Pie' var: nb_piece_of_pie category: "Display parameter";
-	
 	list<people> all_people update: self update_all_people ();
 	float nbPeople update: float(length(all_people));
 	
@@ -275,7 +270,7 @@ experiment main_experiment type:gui{
 			loop i from:0 to:nbel-1 {
 				float dist_home_bel_sum <- 0.0;
 				ask p {
-					dist_home_bel_sum <- dist_home_bel_sum + abs(self.bel[i] + self.home_bld.inhabitant_bel[i]);
+					dist_home_bel_sum <- dist_home_bel_sum + abs(self.bel[i] - self.home_bld.inhabitant_bel[i]);
 				}
 				moyDist_to_home_bel[i] <- dist_home_bel_sum/len_p;
 			}
