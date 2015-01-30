@@ -16,11 +16,11 @@ global {
 	float share_prob <- 1.0;
 	int viewbel <- 1 min : 1 step: 1 parameter: "Belief to display" category: "Display parameters";
 	float mu <- 0.01 min: 0.0 max: 1.0 step: 0.01 parameter: "Speed of influence" category: "Global parameters";
-	float min_incert <- 0.1 max: 1.0 min: 0.0 step: 0.1 parameter: "Minimum initial incertitude" category: "Global parameters";
-	float max_incert <- 0.5 max: 1.0 min: 0.0 step: 0.1 parameter: "Maximum inital incertitude" category: "Global parameters";
-	float family_influence_bel <- 0.2 min: 0.0 max: 1.0 step: 0.05 parameter: "Speed of influence of the family on own belief" category: "Global parameters";
+	float min_incert <- 0.001 max: 1.0 min: 0.0 step: 0.1 parameter: "Minimum initial incertitude" category: "Global parameters";
+	float max_incert <- 0.2 max: 1.0 min: 0.0 step: 0.1 parameter: "Maximum inital incertitude" category: "Global parameters";
+	float family_influence_bel <- 0.01 min: 0.0 max: 0.1 step: 0.01 parameter: "Speed of influence of the family on own belief" category: "Global parameters";
 	float family_influence_incert <- 0.01 min: 0.0 max: 0.1 step: 0.01 parameter: "Speed of influence of the family on own incertitude" category: "Global parameters";
-	float home_influence <- 0.1 min: 0.0 max: 1.0 step: 0.05 parameter: "Speed of influence on the family" category: "Global parameters";
+	float home_influence <- 0.01 min: 0.0 max: 1.0 step: 0.01 parameter: "Speed of influence on the family" category: "Global parameters";
 	
 	list<float> moyBel <- [];
 	list<float> moyInc <- [];
@@ -306,16 +306,16 @@ experiment main_experiment type:gui{
 	
 	output {
 		display Belief {
-			chart name: "Average of Beliefs" type: histogram background: rgb("lightGray") {
+			chart name: "Average of Beliefs" type: series background: rgb("lightGray") {
 				/* Affichage des moyennes de chaque belief sur le même histogramme */
 				loop i from: 0 to: nbel-1 {
-					data "Bel_"+(i+1) value: moyBel[i] color: hsb(i/nbel,1,1);
+					data "Bel_"+(i+1) value: moyBel[i] color: hsb(i/nbel,1,1) marker: false;
 				}
 			}
 		}
 		
 		display Incert {
-			chart name: "Average of Beliefs" type: series background: rgb("lightGray") {
+			chart name: "Average of Incertainties" type: series background: rgb("lightGray") {
 				/* Affichage des moyennes des incertitudes de chaque belief sur le même histogramme */
 				loop i from: 0 to: nbel-1 {
 					data "Inc_"+(i+1) value: moyInc[i] color: hsb(i/nbel,1,1) marker: false;
@@ -324,7 +324,7 @@ experiment main_experiment type:gui{
 		}
 		
 		display Distri {
-			chart name: "Distribution of the displayed Belief" type: pie background: rgb("lightGray") {
+			chart name: "Distribution of the displayed Belief" type: histogram background: rgb("lightGray") {
 				loop i from:0 to:nb_piece_of_pie-1 {
 					data ""+i+"/"+nb_piece_of_pie+" - "+(i+1)+"/"+nb_piece_of_pie value: nb_people_per_piece_of_pie[i] color: hsb(i/nb_piece_of_pie,1,1);
 				}
@@ -332,7 +332,7 @@ experiment main_experiment type:gui{
 		}
 		
 		display Dist_Home {
-			chart name: "Entropy of families' belief" type: series background: rgb("lightGray") {
+			chart name: "Variance of families' belief" type: series background: rgb("lightGray") {
 				/* Affichage des moyennes des distances entre les belief de chaque habitant et de leur maisons */
 				loop i from: 0 to: nbel-1 {
 					data "Bel_"+(i+1) value: moyDist_to_home_bel[i] color: hsb(i/nbel,1,1) marker: false;
