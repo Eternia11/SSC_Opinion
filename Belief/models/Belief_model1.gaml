@@ -12,7 +12,7 @@ global {
 	graph road_network;
 	
 	int nb_people <- 200 min : 1 step: 1 parameter: "Number of people" category: "Global parameters";
-	int nbel <- 2 min : 1 step: 1 parameter: "Number of beliefs" category: "Global parameters";
+	int nbel <- 10 min : 1 step: 1 parameter: "Number of beliefs" category: "Global parameters";
 	float share_prob <- 1.0;
 	int viewbel <- 1 min : 1 step: 1 parameter: "Belief to display" category: "Display parameters";
 	float mu <- 0.01 min: 0.0 max: 1.0 step: 0.01 parameter: "Speed of influence:" category: "Global parameters";
@@ -290,10 +290,10 @@ experiment main_experiment type:gui{
 		}
 		
 		display Incert {
-			chart name: "Average of Beliefs" type: histogram background: rgb("lightGray") {
+			chart name: "Average of Beliefs" type: series background: rgb("lightGray") {
 				/* Affichage des moyennes des incertitudes de chaque belief sur le même histogramme */
 				loop i from: 0 to: nbel-1 {
-					data "Inc_"+(i+1) value: moyInc[i] color: hsb(i/nbel,1,1);
+					data "Inc_"+(i+1) value: moyInc[i] color: hsb(i/nbel,1,1) marker: false;
 				}
 			}
 		}
@@ -307,10 +307,10 @@ experiment main_experiment type:gui{
 		}
 		
 		display Dist_Home {
-			chart name: "Homogeneity of families's belief" type: histogram background: rgb("lightGray") {
+			chart name: "Entropy of families' belief" type: series background: rgb("lightGray") {
 				/* Affichage des moyennes des distances entre les belief de chaque habitant et de leur maisons */
 				loop i from: 0 to: nbel-1 {
-					data "Bel_"+(i+1) value: moyDist_to_home_bel[i] color: hsb(i/nbel,1,1);
+					data "Bel_"+(i+1) value: moyDist_to_home_bel[i] color: hsb(i/nbel,1,1) marker: false;
 				}
 			}
 		}
