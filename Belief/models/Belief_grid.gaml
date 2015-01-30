@@ -78,8 +78,14 @@ entities {
 			my_place <- one_of(free_places);
 			location <- my_place.location; 
 			remove my_place from: free_places;
-			bel <- list_with(nbel,float(rnd(100))/100);
-			incert <- list_with(nbel,min_incert+float(rnd(int((1.0-min_incert)*100)))/100);
+			
+			bel <- list_with(nbel,0.0);
+			incert <- list_with(nbel,0.0);
+			loop i from: 0 to: nbel - 1 step:1 {
+				bel[i] <- rnd_float(1.0);
+				incert[i] <- min_incert+rnd_float(max_incert-min_incert);
+				
+			}
 			
 		} 
 		reflex share_belief{

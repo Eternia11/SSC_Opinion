@@ -12,7 +12,7 @@ global {
 	graph road_network;
 	
 	int nb_people <- 200 min : 1 step: 1 parameter: "Number of people" category: "Global parameters";
-	int nbel <- 10 min : 1 step: 1 parameter: "Number of beliefs" category: "Global parameters";
+	int nbel <- 2 min : 1 step: 1 parameter: "Number of beliefs" category: "Global parameters";
 	float share_prob <- 1.0;
 	int viewbel <- 1 min : 1 step: 1 parameter: "Belief to display" category: "Display parameters";
 	float mu <- 0.01 min: 0.0 max: 1.0 step: 0.01 parameter: "Speed of influence" category: "Global parameters";
@@ -33,7 +33,7 @@ global {
 		create roads from: roads_shapefile;
 		road_network <- as_edge_graph(roads);
 		create buildings from: buildings_shapefile {
-			inhabitant_bel <- list_with(nbel,0.5);
+			inhabitant_bel <- list_with(nbel,rnd_float(1.0));
 		}
 		create people number:nb_people {
 			buildings init_place <- one_of(buildings);
@@ -119,22 +119,26 @@ species people skills:[moving]{
 			float bs <- bel[i];
 			float dist <- bb-bs;
 			
-			/* influence of the families on the incertitude */
-			incert[i] <- incert[i]+family_influence_incert*abs(dist);
-			if (incert[i] < min_incert) {
-				incert[i] <- min_incert;
-			}
-			if (incert[i] > max_incert) {
+			if(abs(dist)<incert[i]){
+					/* influence of the families on the incertitude */
+				incert[i] <- incert[i]+family_influence_incert*dist;
+				if (incert[i] < min_incert) {
+					incert[i] <- min_incert;
+				}
+				if (incert[i] > max_incert) {
 				incert[i] <- max_incert;
-			}
+				}
 			
-			/* influence of the families on the bielief directly */
-			bel[i] <- bel[i]+family_influence_bel*abs(dist);
-			if (bel[i] < 0) {
-				bel[i] <- 0;
-			}
-			if (bel[i] > 1) {
-				bel[i] <- 1;
+				/* influence of the families on the bielief directly */
+				bel[i] <- bel[i]+family_influence_bel*dist;
+				if (bel[i] < 0) {
+					bel[i] <- 0;
+				}
+				if (bel[i] > 1) {
+					bel[i] <- 1;
+				}
+				
+				
 			}
 			
 			/* influence of the inhabitants on their home */
@@ -147,6 +151,8 @@ species people skills:[moving]{
 					home_bld.inhabitant_bel[i] <- 1;
 				}
 			}
+		
+			
 		}
 	}
 	
