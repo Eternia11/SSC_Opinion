@@ -324,7 +324,7 @@ experiment main_experiment type:gui{
 		}
 		
 		display Distri {
-			chart name: "Distribution of the viewed" type: pie background: rgb("lightGray") {
+			chart name: "Distribution of the displayed Belief" type: pie background: rgb("lightGray") {
 				loop i from:0 to:nb_piece_of_pie-1 {
 					data ""+i+"/"+nb_piece_of_pie+" - "+(i+1)+"/"+nb_piece_of_pie value: nb_people_per_piece_of_pie[i] color: hsb(i/nb_piece_of_pie,1,1);
 				}
